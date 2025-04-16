@@ -43,6 +43,34 @@ RETURN people.name, type(relatedTo), relatedTo`
 >>- type(relatedTo)：他與電影的關係類型（如 ACTED_IN, DIRECTED）
 >>- relatedTo：這條關係的完整內容（包含屬性）
 
+# Advance Search(Path: 路徑查詢 & hops: 跨多層關係查詢)
+## Find movies and actors up to 4 "hops" away from Kevin Bacon
+>- 找出距離 Kevin Bacon 1~4 步的電影或人（最多 4 hops）</br>
+`MATCH (bacon:Person {name:"Kevin Bacon"})-[*1..4]-(hollywood)
+RETURN DISTINCT hollywood`
+>- MATCH (bacon:Person {name: "Kevin Bacon"}) --> 找出 Kevin Bacon 的人物節點
+>- -[*1..4]- --> 從他出發，沿著任意類型、任意方向的邊走 1 到 4 步（hops）
+>- (hollywood) --> 每一個 hop 的終點節點，都記為 hollywood（可能是人、電影等）
+>- RETURN DISTINCT hollywood --> 回傳所有找到的節點，不重複 </br>
+### 一個 hop = 走過一條關係（edge），所以這條語法會找到：
+1. Kevin Bacon 演的電影（1 hop）</br>
+2. 跟他共演的人（2 hops）</br>
+3. 再延伸出去的電影或人（最多到 4 hops）</br>
+
+## Find The shortest path following any relationship from Kevin Bacon to "AI Pacino"
+>- 找出 Kevin Bacon 到 Al Pacino 的最短路徑
+`MATCH p=shortestPath(
+              (bacon:Person {name:"Kevin Bacon"})-[*]-(a:Person {name:'Al Pacino'})
+            )
+RETURN p`
+>- shortestPath(...) --> 尋找 Kevin Bacon 到 Al Pacino 的最短路徑（可能經過多部電影或其他演員）
+>- -[*]- --> 沿著任意數量、任意類型、任意方向的關係走
+>- p= --> 把整條路徑命名為 p
+>- RETURN p --> 回傳這條最短路徑（包括中間經過的節點與邊）
+>>- [*]	0 --> 個或多個 hops（沒有限制）
+>>- [*1..4] --> 限制 hop 數在 1～4 之間（防止全圖爆炸）
+>>- [*..6] --> 最多 6 hops
+>>- [*3] --> 剛好 3 hops
 
 # Delete and Update Series
 ## Delete all persons named "Brie Larson" </br>
