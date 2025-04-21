@@ -72,6 +72,32 @@ RETURN p`
 >>- [*..6] --> 最多 6 hops
 >>- [*3] --> 剛好 3 hops
 
+## Find co-co-actors who haven't worked with "Tom Hanks" </br>
+>- 找出「Tom Hanks 沒合作過，但跟他合作過的人常合作的人」
+>- 「你沒跟我合作過，但你常跟我合作過的人合作 → 推薦你給我！」
+`MATCH (a:Person {name:'Tom Hanks'})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+      (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(cocoActors)
+WHERE NOT (a)-[:ACTED_IN]->()<-[:ACTED_IN]-(cocoActors)
+  AND a <> cocoActors
+RETURN cocoActors.name AS Recommended, count(*) AS Strength
+ORDER BY Strength DESC`
+>- a --> Tom Hanks 本人
+>- coActors --> 和 Tom Hanks 一起演過戲的人
+>- cocoActors --> 是 coActors 的共演對象（間接人脈）
+>- WHERE NOT ... --> 過濾掉 Tom Hanks 自己 & 他已經合作過的人
+>- RETURN ... --> 推薦這些 cocoActors，並統計出現次數作為「推薦強度」Strength
+>- ORDER BY Strength DESC --> 推薦次數多的排前面
+
+## Find someone to introduce "Tom Hanks" to "Tom Cruise" </br>
+>- 找出一個可以介紹 Tom Hanks 和 Tom Cruise 的「共同人脈」
+>- 找出「誰同時跟 Tom Hanks 與 Tom Cruise 都合作過」，可以幫忙牽線！
+`MATCH (a:Person {name:'Tom Hanks'})-[:ACTED_IN]->(m)<-[:ACTED_IN]-(coActors),
+      (coActors)-[:ACTED_IN]->(m2)<-[:ACTED_IN]-(other:Person {name:'Tom Cruise'})
+RETURN a, m, coActors, m2, other`
+>- a: Tom Hanks	coActors --> 與Tom Hanks合作過的演員
+>- m2	coActors other: Tom Cruise --> 又去跟 Tom Cruise 合作過的電影
+>- RETURN --> 把所有參與者與合作的電影都回傳（方便圖形化）
+
 # Delete and Update Series
 ## Delete all persons named "Brie Larson" </br>
 `MATCH (a:Person {name:'Brie Larson'}) DETACH DELETE a`
